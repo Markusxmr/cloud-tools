@@ -1,0 +1,61 @@
+# Setup user
+adduser user_name
+usermod -aG sudo user_name
+
+# Initial firewall rules
+ufw allow OpenSSH
+ufw enable
+
+# Copy root ssh keys
+rsync --archive --chown=user_name:user_name ~/.ssh /home/user_name
+
+sudo apt update
+
+# Install nginx
+sudo apt install nginx
+sudo ufw allow 'Nginx Full'
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw reload
+
+# Install Certbot for SSL
+sudo snap install core; sudo snap refresh core
+sudo snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+# Generate certificate
+sudo certbot --nginx -d my-domain.com
+
+# Install Docker
+sudo apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+    
+sudo mkdir -p /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo docker run hello-world
+sudo groupadd docker
+sudo usermod -aG docker $USER
+docker run hello-world
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
+
+# Node.js
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - &&\
+sudo apt-get install -y nodejs
+
+npm i pm2 --global
+
+npm install --global yarn
+
+# Security
+Remove root access via password or similar
